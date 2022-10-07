@@ -1,7 +1,7 @@
 # Python Script Created by MRS
 from nonebot import on_command
 from nonebot.internal.params import ArgStr
-from nonebot.params import CommandArg
+from nonebot.params import CommandArg, State
 from nonebot.adapters.onebot.v11 import Message, MessageSegment, Event
 
 import random, datetime

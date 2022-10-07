@@ -276,8 +276,6 @@ class Handle():
                 return "添加成功!"
             except Exception as e:
                 print(e)
-            finally:
-                return
 
     @staticmethod
     def _del_temp_cave(num: int):

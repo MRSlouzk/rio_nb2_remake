@@ -68,7 +68,8 @@ async def _(event: Event, bot: Bot):
         msg_id = data["original_message"][0]["data"]["id"]
         msg = await bot.get_msg(message_id = msg_id)
         content = msg["message"]
-        qq = int(event.get_user_id())
+        # qq = int(event.get_user_id())
+        qq = data["reply"]["sender"]["user_id"]
         res = Handle.checkMsg(qq, content)
         if(res == -1):
             await cave_add.finish("无法加入cave,请检查图片是否有效")
@@ -174,8 +175,8 @@ async def _(args: Message = CommandArg()):
                 res = Handle._progress_all_cave(True)
             else:
                 await decide_cave.finish("判断参数无效")
-            await decide_cave.finish("已全部删除!")
-        if(arg[1] == "0"):
+            await decide_cave.finish(res)
+        elif(arg[1] == "0"):
             res = Handle._choose_temp_cave(int(arg[0]), False)
         elif(arg[1] == "1"):
             res = Handle._choose_temp_cave(int(arg[0]), True)
