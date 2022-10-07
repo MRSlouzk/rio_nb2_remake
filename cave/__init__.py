@@ -73,32 +73,6 @@ async def _(event: Event, bot: Bot):
         if(res == -1):
             await cave_add.finish("无法加入cave,请检查图片是否有效")
         await cave_add.finish(res)
-        # if (content.count("CQ") >= 2):
-        #     await cave_add.finish("目前暂不支持同一个消息添加两张以上的图片!")
-        # elif (content.count("CQ") == 1):
-        #     pattern = re.compile(r"CQ:image(.+?)url=(?P<url>.*?)]")
-        #     match = re.search(pattern, content)
-        #     if (match is None):
-        #         await cave_add.finish("不支持的消息类型!应当为图片/纯文字")
-        #     url = match.group("url")
-        #     try:
-        #         Handle.add_image(int(event.get_user_id()), url)
-        #         await cave_add.finish("添加成功!")
-        #     except ConnectionError:
-        #         await cave_add.send("连接超时!无法保存图片...")
-        #     except Exception as e:
-        #         print(e)
-        #     finally:
-        #         await cave_add.finish()
-        # else:
-        #     try:
-        #         Handle.add_text(int(event.get_user_id()), content)
-        #         await cave_add.finish("添加成功!")
-        #     except Exception as e:
-        #         print(e)
-        #     finally:
-        #         await cave_add.finish()
-        # await cave_add.finish()
 
 @cave_add.got("cave", prompt="请发送要加入cave当中的消息")
 async def _(event: Event, arg: str = ArgStr("cave")):
@@ -110,34 +84,6 @@ async def _(event: Event, arg: str = ArgStr("cave")):
         if (res == -1):
             await cave_add.finish("无法加入cave,请检查图片是否有效")
         await cave_add.finish(res)
-    #     patt = re.compile(r"\[CQ=(.*?)]")
-    #     b = re.sub(patt, "", arg)
-    #     if(b is not None):
-    #         await cave_add.finish("目前暂不支持图片+文字消息")
-    #
-    #     pattern = re.compile(r"CQ:image(.+?)url=(?P<url>.*?)]")
-    #     match = re.search(pattern, arg)
-    #     if(match is None):
-    #         await cave_add.finish("不支持的消息类型!应当为纯图片/纯文字")
-    #     url = match.group("url")
-    #     try:
-    #         Handle.add_image(int(event.get_user_id()), url)
-    #         await cave_add.finish("添加成功!")
-    #     except ConnectionError:
-    #         await cave_add.send("连接超时!无法保存图片...")
-    #     except Exception as e:
-    #         print(e)
-    #     finally:
-    #         await cave_add.finish()
-    # else:
-    #     try:
-    #         Handle.add_text(int(event.get_user_id()), arg)
-    #         await cave_add.finish("添加成功!")
-    #     except Exception as e:
-    #         print(e)
-    #     finally:
-    #         await cave_add.finish()
-    # await cave_add.finish()
 
 @cave.handle()
 async def _(bot: Bot, args: Message = CommandArg()):
@@ -146,7 +92,7 @@ async def _(bot: Bot, args: Message = CommandArg()):
         if(arg[0] == "帮助"):
             await cave.finish("cave插件说明:\ncave类似于留言板,所有人可以向里面存储一些乱七八糟的图片或文字,并且所有人都可以从里面随机抽取来看\n使用:\n/cave可以随机抽取内容\n/cave-add可以添加新的内容(非管理员添加后需要SU权限组进行审批后方可使用)")
         if(arg[0] == "SU"):
-            await cave.finish("cave管理员帮助:\n/cave-show可以查看指定的内容\n/cave-del可以删除指定内容\n/show-all-temp展示所有未审核cave\n/clear-all-temp清除所有未审核temp\n/decide-cave用于审批")
+            await cave.finish("cave管理员帮助:\n/cave-show可以查看指定的内容\n/cave-del可以删除指定内容\n/show-all-temp展示所有未审核cave\n/clear-all-temp清除所有未审核temp\n/pro-cave用于审批\n/clear-invalid清理所有无效cave")
     try:
         lst = Handle.choose_cave()
     except Exception as e:
@@ -163,6 +109,13 @@ async def _(bot: Bot, args: Message = CommandArg()):
 # max_num = on_command("show-max", priority=20, block=False)
 # @max_num.handle()
 # async def _():
+
+clear_invalid_cave = on_command("clear-invalid", priority=20, block=False, permission=SUPERUSER)
+@clear_invalid_cave.handle()
+async def _():
+    res = Handle.validation_file()
+    await clear_invalid_cave.send(f"处理完成!共清理{res}个无效cave")
+
 #=================================================#
 def _event(event: Event):
     return isinstance(event, GroupMessageEvent)
@@ -203,7 +156,7 @@ async def _():
     res = Handle._clear_temp_cave()
     await clear_all_caves.finish(res)
 
-decide_cave = on_command("decide-cave", priority=1, block=True, permission=SUPERUSER)
+decide_cave = on_command("pro-cave", priority=1, block=True, permission=SUPERUSER)
 @decide_cave.handle()
 async def _(args: Message = CommandArg()):
     arg = args.extract_plain_text().split()
@@ -214,6 +167,13 @@ async def _(args: Message = CommandArg()):
             await decide_cave.finish("/decide-cave用于审批临时cave\n有两个参数:\n第一个参数为cave序号\n第二个参数为0/1(0否1是)")
         await decide_cave.finish()
     elif(len(arg) == 2):
+        if(arg[0] == "all"): #全部处理
+            if (arg[1] == "0"):
+                res = Handle._progress_all_cave(False)
+            elif (arg[1] == "1"):
+                res = Handle._progress_all_cave(True)
+            else:
+                await decide_cave.finish("判断参数无效")
         if(arg[1] == "0"):
             res = Handle._choose_temp_cave(int(arg[0]), False)
         elif(arg[1] == "1"):
@@ -224,9 +184,3 @@ async def _(args: Message = CommandArg()):
         await decide_cave.finish(res)
     else:
         await decide_cave.finish("参数数量过多!")
-
-all_agree = on_command("all-pass", priority=1, block=True, permission=SUPERUSER)
-@all_agree.handle()
-async def _():
-    res = Handle._agree_all_cave()
-    await all_agree.finish(res)

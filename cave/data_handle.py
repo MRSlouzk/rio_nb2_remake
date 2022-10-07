@@ -96,7 +96,10 @@ class Handle():
             return -1
         else:
             if(data["type"] == "image"):
-                os.remove("/home/ubuntu/NewRio/newRio/data/cave/images/" + str(num) + ".png") #FileNotFoundError
+                try:
+                    os.remove("/home/ubuntu/NewRio/newRio/data/cave/images/" + str(num) + ".png") #FileNotFoundError
+                except FileNotFoundError:
+                    pass
             content.pop(str(num))
             with open(relative_url + "cave.json", "w", encoding="utf-8") as f:
                 json.dump(content, f, indent=4, ensure_ascii=False)
@@ -166,11 +169,38 @@ class Handle():
                 print(e)
                 return -1
 
+    @staticmethod
+    def validation_file() -> int:
+        """
+        效验cave正确性
+
+        :return: 被删cave数量
+        """
+        with open(relative_url + "cave.json", "r", encoding="utf-8") as f:
+            content = json.load(f)
+        count = 0
+        for i in content.keys():
+            if(i == "max"):
+                continue
+            data = content[i]
+            if(data["type"] == "text"):
+                if(data["content"] == ""):
+                    Handle.del_cave(int(i))
+                    count += 1
+            elif(data["type"] == "image"):
+                url = data["url"]
+                url = url.replace(abstract_url, "")
+                new_url = relative_url + url
+                if(not os.path.exists(new_url)):
+                    Handle.del_cave(int(i))
+                    count += 1
+        return count
+
     """
     临时cave函数
     """
     @staticmethod
-    def _agree_all_cave():
+    def _progress_all_cave(is_ok: bool):
         with open(relative_url + "cave_temp.json", "r", encoding="utf-8") as f2:
             content = json.load(f2)
         max = content["max"]
@@ -179,8 +209,9 @@ class Handle():
                 info = content[str(i)]
             except KeyError:
                 continue
-            Handle._choose_temp_cave(i, True)
-        return "已全部添加!"
+            Handle._choose_temp_cave(i, is_ok)
+        Handle._clear_temp_cave()
+        return "已全部处理!"
 
     @staticmethod
     def __temp_img(qq: int, url: str):
