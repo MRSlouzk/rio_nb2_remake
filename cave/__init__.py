@@ -76,14 +76,11 @@ async def _(event: Event, bot: Bot):
 
 @cave_add.got("cave", prompt="请发送要加入cave当中的消息")
 async def _(event: Event, arg: str = ArgStr("cave")):
-    if(arg.count("CQ") >= 2):
-        await cave_add.finish("目前暂不支持添加两条以上的图片!")
-    elif(arg.count("CQ") == 1):
-        qq = int(event.get_user_id())
-        res = Handle.checkMsg(qq, arg)
-        if (res == -1):
-            await cave_add.finish("无法加入cave,请检查图片是否有效")
-        await cave_add.finish(res)
+    qq = int(event.get_user_id())
+    res = Handle.checkMsg(qq, arg)
+    if (res == -1):
+        await cave_add.finish("无法加入cave,请检查图片是否有效")
+    await cave_add.finish(res)
 
 @cave.handle()
 async def _(bot: Bot, args: Message = CommandArg()):
@@ -134,7 +131,10 @@ async def _(event: Event, bot: Bot):
             tid = i[3]
             info = await bot.get_stranger_info(user_id=i[1], no_cache=False)
             name = info["nickname"]
-            sig_msg += MessageSegment.image(i[2]) + Message(f"----作者: {name}({qq})\n====作品编号:{tid}")
+            try:
+                sig_msg += MessageSegment.image(i[2]) + Message(f"----作者: {name}({qq})\n====作品编号:{tid}")
+            except:
+                sig_msg += Message("无效图片消息,已过滤")
         else:
             sig_msg = Message()
             qq = i[1]
@@ -174,6 +174,7 @@ async def _(args: Message = CommandArg()):
                 res = Handle._progress_all_cave(True)
             else:
                 await decide_cave.finish("判断参数无效")
+            await decide_cave.finish("已全部删除!")
         if(arg[1] == "0"):
             res = Handle._choose_temp_cave(int(arg[0]), False)
         elif(arg[1] == "1"):
